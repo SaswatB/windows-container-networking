@@ -35,7 +35,8 @@ type KVP struct {
 // Defined as per https://github.com/containernetworking/cni/blob/master/SPEC.md
 type NetworkConfig struct {
 	CniVersion string `json:"cniVersion"`
-	Name       string `json:"name"` // Name is the Network Name. We would also use this as the Type of HNS Network
+	Name       string `json:"name"` // Name is the Network Name.
+	NetworkType string `json:"networkType"` // (Optional) Type of HNS Network to create if it doesn't already exist
 	Type       string `json:"type"` // As per SPEC, Type is Name of the Binary
 	Ipam       struct {
 		Type          string           `json:"type"`
@@ -154,7 +155,7 @@ func (config *NetworkConfig) GetNetworkInfo() *network.NetworkInfo {
 	ninfo := &network.NetworkInfo{
 		ID:            config.Name,
 		Name:          config.Name,
-		Type:          network.NetworkType(config.Name),
+		Type:          network.NetworkType(config.NetworkType),
 		Subnets:       []network.SubnetInfo{subnet},
 		InterfaceName: "",
 		DNS: network.DNSInfo{

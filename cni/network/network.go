@@ -148,6 +148,12 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 	// Check whether the network already exists.
 	nwConfig, err := plugin.nm.GetNetworkByName(cniConfig.Name)
 	if err != nil {
+
+		if networkInfo.Type == "" {
+			logrus.Errorf("[cni-net] Unable to find or create network [%v], networkType is null.", cniConfig.Name)
+			return nil
+		}
+
 		// Network does not exist.
 		logrus.Infof("[cni-net] Creating network.")
 
