@@ -13,6 +13,9 @@ import (
 	cniSkel "github.com/containernetworking/cni/pkg/skel"
 	cniTypes "github.com/containernetworking/cni/pkg/types"
 	cniTypesImpl "github.com/containernetworking/cni/pkg/types/020"
+	"fmt"
+	"net"
+	"strings"
 )
 
 // NetPlugin represents the CNI network plugin.
@@ -139,6 +142,17 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 						Servers: resultImpl.DNS.Nameservers,
 					}
 			*/
+		}
+	}
+
+	if cniConfig.EndpointMacPrefix != "" && epInfo.IPAddress != nil {
+		if len(cniConfig.EndpointMacPrefix) != 5 || cniConfig.EndpointMacPrefix[2] != '-' {
+			return fmt.Errorf("endpointMacPrefix [%v] is invalid, value must be of the format xx-xx", cniConfig.EndpointMacPrefix)
+		}
+
+		macAddress := fmt.Sprintf("%v-%v", cniConfig.EndpointMacPrefix, strings.Replace(epInfo.IPAddress.String(), ".", "-", -1))
+		if epInfo.MacAddress, err = net.ParseMAC(macAddress); err != nil {
+			return fmt.Errorf("failed to parse generated mac [%v], with error: %v", macAddress, err.Error())
 		}
 	}
 
