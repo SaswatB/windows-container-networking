@@ -105,57 +105,6 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 	networkInfo := cniConfig.GetNetworkInfo()
 	epInfo := cniConfig.GetEndpointInfo(networkInfo, args.ContainerID, args.Netns)
 
-	if cniConfig.Ipam.Type != "" {
-		var result cniTypes.Result
-		var resultImpl *cniTypesImpl.Result
-
-		result, err := invoke.DelegateAdd(cniConfig.Ipam.Type, cniConfig.Serialize())
-		if err != nil {
-			logrus.Infof("[cni-net] Failed to allocate pool, err:%v.", err)
-			return nil
-		}
-
-		resultImpl, err = cniTypesImpl.GetResult(result)
-		if err != nil {
-			logrus.Infof("[cni-net] Failed to allocate pool, err:%v.", err)
-			return nil
-		}
-
-		logrus.Infof("[cni-net] IPAM plugin returned result %v.", resultImpl)
-		// Derive the subnet from allocated IP address.
-		if resultImpl.IP4 != nil {
-			var subnetInfo = network.SubnetInfo{
-				AddressPrefix:  resultImpl.IP4.IP,
-				GatewayAddress: resultImpl.IP4.Gateway,
-			}
-			networkInfo.Subnets = append(networkInfo.Subnets, subnetInfo)
-			epInfo.IPAddress = resultImpl.IP4.IP.IP
-			epInfo.Gateway = resultImpl.IP4.Gateway
-			epInfo.Subnet = resultImpl.IP4.IP
-
-			for _, route := range resultImpl.IP4.Routes {
-				epInfo.Routes = append(epInfo.Routes, network.RouteInfo{Destination: route.Dst, Gateway: route.GW})
-			}
-			/*
-				// TODO : This should override the global settings.
-					epInfo.DNS = network.DNSInfo{
-						Servers: resultImpl.DNS.Nameservers,
-					}
-			*/
-		}
-	}
-
-	if cniConfig.EndpointMacPrefix != "" && epInfo.IPAddress != nil {
-		if len(cniConfig.EndpointMacPrefix) != 5 || cniConfig.EndpointMacPrefix[2] != '-' {
-			return fmt.Errorf("endpointMacPrefix [%v] is invalid, value must be of the format xx-xx", cniConfig.EndpointMacPrefix)
-		}
-
-		macAddress := fmt.Sprintf("%v-%v", cniConfig.EndpointMacPrefix, strings.Replace(epInfo.IPAddress.String(), ".", "-", -1))
-		if epInfo.MacAddress, err = net.ParseMAC(macAddress); err != nil {
-			return fmt.Errorf("failed to parse generated mac [%v], with error: %v", macAddress, err.Error())
-		}
-	}
-
 	// Name of the Network that would be created. HNS allows to create multiple networks with duplicate name
 	hnsNetworkId := cniConfig.Name // Initialize with the Name.
 
@@ -217,8 +166,59 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 
 			return nil
 		}
-	} else {
-		logrus.Debugf("[cni-net] Creating a new Endpoint")
+	}
+
+	logrus.Debugf("[cni-net] Creating a new Endpoint")
+
+	if cniConfig.Ipam.Type != "" {
+		var result cniTypes.Result
+		var resultImpl *cniTypesImpl.Result
+
+		result, err := invoke.DelegateAdd(cniConfig.Ipam.Type, cniConfig.Serialize())
+		if err != nil {
+			logrus.Infof("[cni-net] Failed to allocate pool, err:%v.", err)
+			return nil
+		}
+
+		resultImpl, err = cniTypesImpl.GetResult(result)
+		if err != nil {
+			logrus.Infof("[cni-net] Failed to allocate pool, err:%v.", err)
+			return nil
+		}
+
+		logrus.Infof("[cni-net] IPAM plugin returned result %v.", resultImpl)
+		// Derive the subnet from allocated IP address.
+		if resultImpl.IP4 != nil {
+			var subnetInfo = network.SubnetInfo{
+				AddressPrefix:  resultImpl.IP4.IP,
+				GatewayAddress: resultImpl.IP4.Gateway,
+			}
+			networkInfo.Subnets = append(networkInfo.Subnets, subnetInfo)
+			epInfo.IPAddress = resultImpl.IP4.IP.IP
+			epInfo.Gateway = resultImpl.IP4.Gateway
+			epInfo.Subnet = resultImpl.IP4.IP
+
+			for _, route := range resultImpl.IP4.Routes {
+				epInfo.Routes = append(epInfo.Routes, network.RouteInfo{Destination: route.Dst, Gateway: route.GW})
+			}
+			/*
+				// TODO : This should override the global settings.
+					epInfo.DNS = network.DNSInfo{
+						Servers: resultImpl.DNS.Nameservers,
+					}
+			*/
+		}
+	}
+
+	if cniConfig.EndpointMacPrefix != "" && epInfo.IPAddress != nil {
+		if len(cniConfig.EndpointMacPrefix) != 5 || cniConfig.EndpointMacPrefix[2] != '-' {
+			return fmt.Errorf("endpointMacPrefix [%v] is invalid, value must be of the format xx-xx", cniConfig.EndpointMacPrefix)
+		}
+
+		macAddress := fmt.Sprintf("%v-%v", cniConfig.EndpointMacPrefix, strings.Replace(epInfo.IPAddress.String(), ".", "-", -1))
+		if epInfo.MacAddress, err = net.ParseMAC(macAddress); err != nil {
+			return fmt.Errorf("failed to parse generated mac [%v], with error: %v", macAddress, err.Error())
+		}
 	}
 
 	// Apply the Network Policy for Endpoint
