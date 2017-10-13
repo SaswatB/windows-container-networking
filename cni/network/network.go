@@ -15,7 +15,7 @@ import (
 	cniTypesImpl "github.com/containernetworking/cni/pkg/types/020"
 	"fmt"
 	"net"
-	"strings"
+	"encoding/json"
 )
 
 // NetPlugin represents the CNI network plugin.
@@ -215,7 +215,8 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 			return fmt.Errorf("endpointMacPrefix [%v] is invalid, value must be of the format xx-xx", cniConfig.EndpointMacPrefix)
 		}
 
-		macAddress := fmt.Sprintf("%v-%v", cniConfig.EndpointMacPrefix, strings.Replace(epInfo.IPAddress.String(), ".", "-", -1))
+		ip4 := epInfo.IPAddress.To4().String()
+		macAddress := fmt.Sprintf("%v-%02x-%02x-%02x-%02x", cniConfig.EndpointMacPrefix, epInfo.IPAddress[12], epInfo.IPAddress[13], epInfo.IPAddress[14], epInfo.IPAddress[15])
 		if epInfo.MacAddress, err = net.ParseMAC(macAddress); err != nil {
 			return fmt.Errorf("failed to parse generated mac [%v], with error: %v", macAddress, err.Error())
 		}
@@ -223,6 +224,11 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 
 	// Apply the Network Policy for Endpoint
 	epInfo.Policies = networkInfo.Policies
+
+	// Apply default PA policy for Overlay
+	if nwConfig.Type == network.Overlay {
+		ApplyDefaultPAPolicy(epInfo, nwConfig.ManagementIP.String())
+	}
 
 	// If Network Policies exist, overwrite
 
@@ -242,8 +248,37 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 	//result := cni.GetResult(nwConfig, epInfo)
 	result := cni.GetResult020(nwConfig, epInfo)
 	result.Print()
-	//logrus.Debugf(result.String())
+
 	return err
+}
+
+func ApplyDefaultPAPolicy(epInfo *network.EndpointInfo, paAddress string) {
+	if epInfo.Policies == nil {
+		epInfo.Policies =[]network.Policy{}
+	}
+
+	for _, policy := range epInfo.Policies {
+		if policy.Type == network.EndpointPolicy {
+			var kvpList map[string]interface{}
+			if err := json.Unmarshal(policy.Data, &kvpList); err == nil {
+				if _, ok := kvpList["PA"]; ok {
+					// found it, don't override
+					return
+				}
+			}
+		}
+	}
+
+	// did not find, add it now
+	data, _ := json.Marshal(map[string]interface{}{
+		"Type": "PA",
+		"PA":   paAddress,
+	})
+	paPolicy := &network.Policy{
+		Type: network.EndpointPolicy,
+		Data: data,
+	}
+	epInfo.Policies = append(epInfo.Policies, *paPolicy)
 }
 
 // Delete handles CNI delete commands.

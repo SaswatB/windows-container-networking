@@ -33,6 +33,7 @@ type NetworkInfo struct {
 	Name          string
 	Type          NetworkType
 	InterfaceName string
+	ManagementIP  net.IP
 	Subnets       []SubnetInfo
 	DNS           DNSInfo
 	Policies      []Policy
@@ -75,6 +76,7 @@ func GetNetworkInfo(hnsNetwork *hcsshim.HNSNetwork) *NetworkInfo {
 		Name:          hnsNetwork.Name,
 		Type:          NetworkType(hnsNetwork.Type),
 		InterfaceName: hnsNetwork.NetworkAdapterName,
+		ManagementIP: net.ParseIP(hnsNetwork.ManagementIP),
 		Subnets:       subnets,
 		DNS: DNSInfo{
 			Suffix:  hnsNetwork.DNSSuffix,

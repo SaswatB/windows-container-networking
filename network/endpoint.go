@@ -41,7 +41,7 @@ func (endpoint *EndpointInfo) GetHNSEndpointConfig() *hcsshim.HNSEndpoint {
 		VirtualNetwork: endpoint.NetworkID,
 		DNSServerList:  strings.Join(endpoint.DNS.Servers, ","),
 		DNSSuffix:      endpoint.DNS.Suffix,
-		MacAddress:     endpoint.MacAddress.String(),
+		MacAddress:     strings.Replace(endpoint.MacAddress.String(), ":", "-", -1),
 		GatewayAddress: endpoint.Gateway.String(),
 		IPAddress:      endpoint.IPAddress,
     	Policies:       GetHNSEndpointPolicies(endpoint.Policies),
