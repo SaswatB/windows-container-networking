@@ -216,7 +216,7 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 		}
 
 		ip4 := epInfo.IPAddress.To4().String()
-		macAddress := fmt.Sprintf("%v-%02x-%02x-%02x-%02x", cniConfig.EndpointMacPrefix, epInfo.IPAddress[12], epInfo.IPAddress[13], epInfo.IPAddress[14], epInfo.IPAddress[15])
+		macAddress := fmt.Sprintf("%v-%02x-%02x-%02x-%02x", cniConfig.EndpointMacPrefix, ip4[0], ip4[1], ip4[2], ip4[3])
 		if epInfo.MacAddress, err = net.ParseMAC(macAddress); err != nil {
 			return fmt.Errorf("failed to parse generated mac [%v], with error: %v", macAddress, err.Error())
 		}
