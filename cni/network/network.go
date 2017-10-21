@@ -242,7 +242,8 @@ func (plugin *netPlugin) Add(args *cniSkel.CmdArgs) error {
 	err = epInfo.HotAttachEndpoint(args.ContainerID)
 	if err != nil {
 		logrus.Errorf("[cni-net] Failed to HotAdd endpoint %v, err:%v.", epInfo.ID, err)
-		err = plugin.nm.DeleteEndpoint(epInfo.ID)
+		plugin.nm.DeleteEndpoint(epInfo.ID)
+		return nil
 	}
 
 	//result := cni.GetResult(nwConfig, epInfo)
