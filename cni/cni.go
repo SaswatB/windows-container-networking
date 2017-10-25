@@ -36,7 +36,7 @@ type KVP struct {
 type NetworkConfig struct {
 	CniVersion string `json:"cniVersion"`
 	Name       string `json:"name"` // Name is the Network Name.
-	NetworkType string `json:"networkType"` // (Optional) Type of HNS Network to create if it doesn't already exist
+	NetworkType string `json:"networkType,omitempty"` // (Optional) Type of HNS Network to create if it doesn't already exist
 	EndpointMacPrefix string `json:"endpointMacPrefix"` // (Optional) Two byte MAC prefix e.g. "0E-2A". If specified WINCNI will use this value to generate a MAC as prefix.a.b.c.d
 	Type       string `json:"type"` // As per SPEC, Type is Name of the Binary
 	Ipam       struct {
