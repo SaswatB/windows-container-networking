@@ -189,8 +189,10 @@ func (config *NetworkConfig) GetNetworkInfo() *network.NetworkInfo {
 		Subnets:       []network.SubnetInfo{subnet},
 		InterfaceName: "",
 		DNS: network.DNSInfo{
-			Servers: config.DNS.Nameservers,
-			Suffix:  strings.Join(config.DNS.Search, ","),
+			Nameservers:  config.DNS.Nameservers,
+			Search:       config.DNS.Search,
+			DomainSuffix: config.DNS.Domain,
+			Options:      config.DNS.Options,
 		},
 	}
 	if config.AdditionalArgs != nil {
@@ -210,21 +212,18 @@ func (config *NetworkConfig) GetEndpointInfo(
 	networkinfo *network.NetworkInfo,
 	containerID string, netNs string, podK8sNamespace string) *network.EndpointInfo {
 	containerIDToUse := containerID
-	if netNs != "" {
-		splits := strings.Split(netNs, ":")
-		if len(splits) == 2 {
-			containerIDToUse = splits[1]
-		}
-	}
 	epInfo := &network.EndpointInfo{
 		Name:        containerIDToUse + "_" + networkinfo.ID,
 		NetworkID:   networkinfo.ID,
+		NamespaceID: netNs,
 		ContainerID: containerID,
 	}
 
 	epInfo.DNS = network.DNSInfo{
-		Servers: networkinfo.DNS.Servers,
-		Suffix:  podK8sNamespace + "." + networkinfo.DNS.Suffix,
+		DomainSuffix: podK8sNamespace + "." + networkinfo.DNS.DomainSuffix,
+		Search:       networkinfo.DNS.Search,
+		Nameservers:  networkinfo.DNS.Nameservers,
+		Options:      networkinfo.DNS.Options,
 	}
 
 	epInfo.Subnet = networkinfo.Subnets[0].AddressPrefix
@@ -233,9 +232,9 @@ func (config *NetworkConfig) GetEndpointInfo(
 	runtimeConf := config.RuntimeConfig
 	logrus.Debugf("Parsing port mappings from %+v", runtimeConf.PortMappings)
 	for _, mapping := range runtimeConf.PortMappings {
-		natPolicy := network.GetHNSNatPolicy(mapping.HostPort, mapping.ContainerPort, mapping.Protocol)
-		logrus.Debugf("Created raw policy from mapping: %+v --- %+v", mapping, natPolicy)
-		epInfo.Policies = append(epInfo.Policies, natPolicy)
+		policy := network.GetPortMappingPolicy(mapping.HostPort, mapping.ContainerPort, mapping.Protocol)
+		logrus.Debugf("Created raw policy from mapping: %+v --- %+v", mapping, policy)
+		epInfo.Policies = append(epInfo.Policies, policy)
 	}
 
 	return epInfo
