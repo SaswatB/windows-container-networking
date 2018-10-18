@@ -5,9 +5,11 @@ package network
 
 import (
 	"encoding/json"
+	"strings"
 
 	"net"
 
+	"github.com/Microsoft/hcsshim"
 	"github.com/Microsoft/hcsshim/hcn"
 )
 
@@ -22,8 +24,10 @@ const (
 )
 
 type DNSInfo struct {
-	Servers []string
-	Suffix  string
+	Nameservers  []string
+	DomainSuffix string
+	Search       []string
+	Options      []string
 }
 
 // Datastore for NetworkInfo.
@@ -67,8 +71,10 @@ func (info *NetworkInfo) GetHostComputeNetworkConfig() *hcn.HostComputeNetwork {
 			},
 		},
 		Dns: hcn.Dns{
-			Suffix:     info.DNS.Suffix,
-			ServerList: info.DNS.Servers,
+			Suffix:     info.DNS.DomainSuffix,
+			Search:     info.DNS.Search,
+			ServerList: info.DNS.Nameservers,
+			Options:    info.DNS.Options,
 		},
 		SchemaVersion: hcn.SchemaVersion{
 			Major: 2,
@@ -93,8 +99,10 @@ func GetNetworkInfoFromHostComputeNetwork(hcnNetwork *hcn.HostComputeNetwork) *N
 		InterfaceName: GetNetAdapterNameNetworkPolicySetting(hcnNetwork.Policies),
 		Subnets:       subnets,
 		DNS: DNSInfo{
-			Suffix:  hcnNetwork.Dns.Suffix,
-			Servers: hcnNetwork.Dns.ServerList,
+			DomainSuffix: hcnNetwork.Dns.Suffix,
+			Search:       hcnNetwork.Dns.Search,
+			Nameservers:  hcnNetwork.Dns.ServerList,
+			Options:      hcnNetwork.Dns.Options,
 		},
 		Policies: GetNetworkPoliciesFromHostComputeNetworkPolicies(hcnNetwork.Policies),
 	}
