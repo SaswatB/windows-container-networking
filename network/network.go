@@ -5,11 +5,9 @@ package network
 
 import (
 	"encoding/json"
-	"strings"
 
 	"net"
 
-	"github.com/Microsoft/hcsshim"
 	"github.com/Microsoft/hcsshim/hcn"
 )
 
