@@ -54,7 +54,7 @@ func (endpoint *EndpointInfo) GetHostComputeEndpoint() *hcn.HostComputeEndpoint 
 		HostComputeNetwork:   endpoint.NetworkID,
 		HostComputeNamespace: endpoint.NamespaceID,
 		Dns: hcn.Dns{
-			Suffix:     endpoint.DNS.DomainSuffix,
+			Suffix:     endpoint.DNS.Domain,
 			Search:     endpoint.DNS.Search,
 			ServerList: endpoint.DNS.Nameservers,
 			Options:    endpoint.DNS.Options,
@@ -96,10 +96,10 @@ func GetEndpointInfoFromHostComputeEndpoint(hcnEndpoint *hcn.HostComputeEndpoint
 		NetworkID:   hcnEndpoint.HostComputeNetwork,
 		NamespaceID: hcnEndpoint.HostComputeNamespace,
 		DNS: DNSInfo{
-			DomainSuffix: hcnEndpoint.Dns.Suffix,
-			Search:       hcnEndpoint.Dns.Search,
-			Nameservers:  hcnEndpoint.Dns.ServerList,
-			Options:      hcnEndpoint.Dns.Options,
+			Domain:      hcnEndpoint.Dns.Suffix,
+			Search:      hcnEndpoint.Dns.Search,
+			Nameservers: hcnEndpoint.Dns.ServerList,
+			Options:     hcnEndpoint.Dns.Options,
 		},
 		MacAddress: macAddr,
 		Gateway:    gwAddr,

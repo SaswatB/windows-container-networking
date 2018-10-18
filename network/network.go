@@ -22,10 +22,10 @@ const (
 )
 
 type DNSInfo struct {
-	Nameservers  []string
-	DomainSuffix string
-	Search       []string
-	Options      []string
+	Nameservers []string
+	Domain      string
+	Search      []string
+	Options     []string
 }
 
 // Datastore for NetworkInfo.
@@ -69,7 +69,7 @@ func (info *NetworkInfo) GetHostComputeNetworkConfig() *hcn.HostComputeNetwork {
 			},
 		},
 		Dns: hcn.Dns{
-			Suffix:     info.DNS.DomainSuffix,
+			Suffix:     info.DNS.Domain,
 			Search:     info.DNS.Search,
 			ServerList: info.DNS.Nameservers,
 			Options:    info.DNS.Options,
@@ -97,10 +97,10 @@ func GetNetworkInfoFromHostComputeNetwork(hcnNetwork *hcn.HostComputeNetwork) *N
 		InterfaceName: GetNetAdapterNameNetworkPolicySetting(hcnNetwork.Policies),
 		Subnets:       subnets,
 		DNS: DNSInfo{
-			DomainSuffix: hcnNetwork.Dns.Suffix,
-			Search:       hcnNetwork.Dns.Search,
-			Nameservers:  hcnNetwork.Dns.ServerList,
-			Options:      hcnNetwork.Dns.Options,
+			Domain:      hcnNetwork.Dns.Suffix,
+			Search:      hcnNetwork.Dns.Search,
+			Nameservers: hcnNetwork.Dns.ServerList,
+			Options:     hcnNetwork.Dns.Options,
 		},
 		Policies: GetNetworkPoliciesFromHostComputeNetworkPolicies(hcnNetwork.Policies),
 	}

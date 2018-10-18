@@ -191,10 +191,10 @@ func (config *NetworkConfig) GetNetworkInfo() *network.NetworkInfo {
 		Subnets:       subnets,
 		InterfaceName: "",
 		DNS: network.DNSInfo{
-			Nameservers:  config.DNS.Nameservers,
-			Search:       config.DNS.Search,
-			DomainSuffix: config.DNS.Domain,
-			Options:      config.DNS.Options,
+			Nameservers: config.DNS.Nameservers,
+			Search:      config.DNS.Search,
+			Domain:      config.DNS.Domain,
+			Options:     config.DNS.Options,
 		},
 	}
 	if config.AdditionalArgs != nil {
@@ -222,10 +222,10 @@ func (config *NetworkConfig) GetEndpointInfo(
 	}
 
 	epInfo.DNS = network.DNSInfo{
-		DomainSuffix: podK8sNamespace + "." + networkinfo.DNS.DomainSuffix,
-		Search:       networkinfo.DNS.Search,
-		Nameservers:  networkinfo.DNS.Nameservers,
-		Options:      networkinfo.DNS.Options,
+		Domain:      podK8sNamespace + "." + networkinfo.DNS.Domain,
+		Search:      networkinfo.DNS.Search,
+		Nameservers: networkinfo.DNS.Nameservers,
+		Options:     networkinfo.DNS.Options,
 	}
 
 	if len(networkinfo.Subnets) > 0 {
