@@ -41,6 +41,7 @@ type PortMapping struct {
 
 type RuntimeConfig struct {
 	PortMappings []PortMapping `json:"portMappings,omitempty"`
+	DNS          cniTypes.DNS  `json:"dns"`
 }
 
 // NetworkConfig represents the Windows CNI plugin's network configuration.
@@ -184,18 +185,36 @@ func (config *NetworkConfig) GetNetworkInfo() *network.NetworkInfo {
 		subnets = append(subnets, subnet)
 	}
 
+	dnsSettings := network.DNSInfo{
+		Nameservers: config.DNS.Nameservers,
+		Search:      config.DNS.Search,
+		Domain:      config.DNS.Domain,
+		Options:     config.DNS.Options,
+	}
+	if len(config.RuntimeConfig.DNS.Nameservers) > 0 {
+		logrus.Debugf("Substituting RuntimeConfig DNS Nameservers: %+v", config.RuntimeConfig.DNS.Nameservers)
+		dnsSettings.Nameservers = config.RuntimeConfig.DNS.Nameservers
+	}
+	if config.RuntimeConfig.DNS.Domain != "" {
+		logrus.Debugf("Substituting RuntimeConfig DNS Domain: %+v", config.RuntimeConfig.DNS.Domain)
+		dnsSettings.Domain = config.RuntimeConfig.DNS.Domain
+	}
+	if len(config.RuntimeConfig.DNS.Search) > 0 {
+		logrus.Debugf("Substituting RuntimeConfig DNS Search: %+v", config.RuntimeConfig.DNS.Search)
+		dnsSettings.Search = config.RuntimeConfig.DNS.Search
+	}
+	if len(config.RuntimeConfig.DNS.Options) > 0 {
+		logrus.Debugf("Substituting RuntimeConfig DNS Options: %+v", config.RuntimeConfig.DNS.Options)
+		dnsSettings.Options = config.RuntimeConfig.DNS.Options
+	}
+
 	ninfo := &network.NetworkInfo{
 		ID:            config.Name,
 		Name:          config.Name,
 		Type:          network.NetworkType(config.Name),
 		Subnets:       subnets,
 		InterfaceName: "",
-		DNS: network.DNSInfo{
-			Nameservers: config.DNS.Nameservers,
-			Search:      config.DNS.Search,
-			Domain:      config.DNS.Domain,
-			Options:     config.DNS.Options,
-		},
+		DNS:           dnsSettings,
 	}
 	if config.AdditionalArgs != nil {
 		for _, kvp := range config.AdditionalArgs {
